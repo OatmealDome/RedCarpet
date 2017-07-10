@@ -1,0 +1,505 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Syroot.NintenTools.Byaml</name>
+    </assembly>
+    <members>
+        <member name="T:Syroot.NintenTools.Byaml.ByamlException">
+            <summary>
+            Represents errors that occur when trying to process invalid BYAML data.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.ByamlException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.ByamlException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.ByamlException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.ByamlException"/> class with a specified error message and a
+            reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="inner"> The exception that is the cause of the current exception, or a null reference if no
+            inner exception is specified.</param>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.ByamlNodeType">
+            <summary>
+            Represents the type of which a dynamic BYAML node can be.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.StringIndex">
+            <summary>
+            The node represents a <see cref="T:System.String"/> (internally referenced by index).
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.PathIndex">
+            <summary>
+            The node represents a list of <see cref="T:Syroot.NintenTools.Byaml.ByamlPathPoint"/> instances (internally referenced by index).
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Array">
+            <summary>
+            The node represents an array of dynamic child instances.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Dictionary">
+            <summary>
+            The node represents a dictionary of dynamic child instances referenced by a <see cref="T:System.String"/> key.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.StringArray">
+            <summary>
+            The node represents an array of <see cref="T:System.String"/> instances.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.PathArray">
+            <summary>
+            The node represents an array of lists of <see cref="T:Syroot.NintenTools.Byaml.ByamlPathPoint"/> instances.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Boolean">
+            <summary>
+            The node represents a <see cref="T:System.Boolean"/>.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Integer">
+            <summary>
+            The node represents an <see cref="T:System.Int32"/>.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Float">
+            <summary>
+            The node represents a <see cref="T:System.Single"/>.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlNodeType.Null">
+            <summary>
+            The node represents <c>null</c>.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.ByamlNodeTypeExtensions">
+            <summary>
+            Represents extension methods for <see cref="T:Syroot.NintenTools.Byaml.ByamlNodeType"/> instances.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.ByamlNodeTypeExtensions.GetInstanceType(Syroot.NintenTools.Byaml.ByamlNodeType)">
+            <summary>
+            Gets the corresponding, instantiatable <see cref="T:System.Type"/> for the given <paramref name="nodeType"/>.
+            </summary>
+            <param name="nodeType">The <see cref="T:Syroot.NintenTools.Byaml.ByamlNodeType"/> which should be instantiated.</param>
+            <returns>The <see cref="T:System.Type"/> to instantiate for the node.</returns>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.ByamlPathPoint">
+            <summary>
+            Represents a point in a BYAML path.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.ByamlPathPoint.SizeInBytes">
+            <summary>
+            The size of a single point in bytes when serialized as BYAML data.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.ByamlPathPoint.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.ByamlPathPoint"/> class.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.ByamlPathPoint.Position">
+            <summary>
+            Gets or sets the location.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.ByamlPathPoint.Normal">
+            <summary>
+            Gets or sets the normal.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.ByamlPathPoint.Unknown">
+            <summary>
+            Gets or sets an unknown value.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.ByamlPathPoint.Equals(Syroot.NintenTools.Byaml.ByamlPathPoint)">
+            <summary>
+            Indicates whether the current object is equal to another object of the same type.
+            </summary>
+            <param name="other">An object to compare with this object.</param>
+            <returns>true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+            </returns>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Dynamic.ByamlFile">
+            <summary>
+            Represents the loading and saving logic of BYAML files and returns the resulting file structure in dynamic
+            objects.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.Load(System.String,System.Boolean,Syroot.IO.ByteOrder)">
+            <summary>
+            Deserializes and returns the dynamic value of the BYAML node read from the given file.
+            </summary>
+            <param name="fileName">The name of the file to read the data from.</param>
+            <param name="supportPaths">Whether to expect a path array offset. This must be enabled for Mario Kart 8
+            files.</param>
+            <param name="byteOrder">The <see cref="T:Syroot.IO.ByteOrder"/> to read data in.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.Load(System.IO.Stream,System.Boolean,Syroot.IO.ByteOrder)">
+            <summary>
+            Deserializes and returns the dynamic value of the BYAML node read from the specified stream.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream"/> to read the data from.</param>
+            <param name="supportPaths">Whether to expect a path array offset. This must be enabled for Mario Kart 8
+            files.</param>
+            <param name="byteOrder">The <see cref="T:Syroot.IO.ByteOrder"/> to read data in.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.Save(System.String,System.Object,System.Boolean,Syroot.IO.ByteOrder)">
+            <summary>
+            Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+            and stores it in the given file.
+            </summary>
+            <param name="fileName">The name of the file to store the data in.</param>
+            <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+            BYAML compatible values.</param>
+            <param name="supportPaths">Whether to include a path array. This must be enabled for Mario Kart 8 files.
+            </param>
+            <param name="byteOrder">The <see cref="T:Syroot.IO.ByteOrder"/> to store data in.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.Save(System.IO.Stream,System.Object,System.Boolean,Syroot.IO.ByteOrder)">
+            <summary>
+            Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+            and stores it in the specified stream.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream"/> to store the data in.</param>
+            <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+            BYAML compatible values.</param>
+            <param name="supportPaths">Whether to include a path array. This must be enabled for Mario Kart 8 files.
+            </param>
+            <param name="byteOrder">The <see cref="T:Syroot.IO.ByteOrder"/> to store data in.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.GetValue(System.Collections.Generic.IDictionary{System.String,System.Object},System.String)">
+            <summary>
+            Tries to retrieve the value of the element with the specified <paramref name="key"/> stored in the given
+            dictionary <paramref name="node"/>. If the key does not exist, <c>null</c> is returned.
+            </summary>
+            <param name="node">The dictionary BYAML node to retrieve the value from.</param>
+            <param name="key">The key of the value to retrieve.</param>
+            <returns>The value stored under the given key or <c>null</c> if the key is not present.</returns>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.SetValue(System.Collections.Generic.IDictionary{System.String,System.Object},System.String,System.Object)">
+            <summary>
+            Sets the given <paramref name="value"/> in the provided dictionary <paramref name="node"/> under the
+            specified <paramref name="key"/>. If the value is <c>null</c>, the key is removed from the dictionary node.
+            </summary>
+            <param name="node">The dictionary node to store the value under.</param>
+            <param name="key">The key under which the value will be stored or which will be removed.</param>
+            <param name="value">The value to store under the key or <c>null</c> to remove the key.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Dynamic.ByamlFile.GetList``1(System.Collections.Generic.IEnumerable{System.Object})">
+            <summary>
+            Casts all elements of the given array <paramref name="node"/> into the provided type
+            <typeparamref name="T"/>. If the node is <c>null</c>, <c>null</c> is returned.
+            </summary>
+            <typeparam name="T">The type to cast each element to.</typeparam>
+            <param name="node">The array node which elements will be casted.</param>
+            <returns>The list of type <typeparamref name="T"/> or <c>null</c> if the node is <c>null</c>.</returns>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.IO.BinaryDataReaderExtensions">
+            <summary>
+            Represents a set of extension methods for the <see cref="T:Syroot.IO.BinaryDataReader"/> class.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.IO.BinaryDataReaderExtensions.ReadVector3F(Syroot.IO.BinaryDataReader)">
+            <summary>
+            Reads a <see cref="T:Syroot.Maths.Vector3F"/> instance from the current position in the base stream, and advances the
+            position of the stream by 12 bytes.
+            </summary>
+            <param name="reader">The extended <see cref="T:Syroot.IO.BinaryDataReader"/>.</param>
+            <returns>The read <see cref="T:Syroot.Maths.Vector3F"/>.</returns>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.IO.BinaryDataWriterExtensions">
+            <summary>
+            Represents a set of extension methods for the <see cref="T:Syroot.IO.BinaryDataWriter"/> class.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.IO.BinaryDataWriterExtensions.Write(Syroot.IO.BinaryDataWriter,Syroot.Maths.Vector3F)">
+            <summary>
+            Writes a <see cref="T:Syroot.Maths.Vector3F"/> instance at the current position in the base stream, and advances the
+            position of the stream by 12 bytes.
+            </summary>
+            <param name="writer">The extended <see cref="T:Syroot.IO.BinaryDataWriter"/>.</param>
+            <param name="value">The <see cref="T:Syroot.Maths.Vector3F"/> to write.</param>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute">
+            <summary>
+            Decorates fields or properties which are treated as values in BYAML dictionaries.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute"/> class. If the name of the member is
+            different from the key in the BYAML data, it can be provided with the <paramref name="key"/> parameter.
+            </summary>
+            <param name="key">The name of the key in the BYAML data which maps to this member.</param>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute.Key">
+            <summary>
+            Gets or sets the key under which this value is stored. If not specified, the field or property name is taken
+            as it appears in code.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute.Optional">
+            <summary>
+            Gets or sets a value indicating how this value will behave if it is <c>null</c>. When set to <c>true</c>,
+            the value does not have to exist in the BYAML data and will not be stored if it is <c>null</c>. When set to
+            <c>false</c>, the value must exist in the BYAML data and will be stored as a null node if it is <c>null</c>.
+            It cannot be set to <c>true</c> on value types, which must be wrapped in a nullable type.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo">
+            <summary>
+            Represents information about a type decorated with a <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute"/>.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.#ctor(Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute,System.Reflection.FieldInfo)">
+            <summary>
+            Creates a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo"/> class caching information on the given
+            <paramref name="fieldInfo"/> decorated with the given <paramref name="attribute"/>.
+            </summary>
+            <param name="attribute">The <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute"/> to cache information on.</param>
+            <param name="fieldInfo">The <see cref="T:System.Reflection.FieldInfo"/> decorated with the attribute.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.#ctor(Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute,System.Reflection.PropertyInfo)">
+            <summary>
+            Creates a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo"/> class caching information on the given
+            <paramref name="propertyInfo"/> decorated with the given <paramref name="attribute"/>.
+            </summary>
+            <param name="attribute">The <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlMemberAttribute"/> to cache information on.</param>
+            <param name="propertyInfo">The <see cref="T:System.Reflection.PropertyInfo"/> decorated with the attribute.</param>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.Optional">
+            <summary>
+            Gets or sets a value indicating whether the field is not required to be set to a non-<c>null</c> value.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.MemberInfo">
+            <summary>
+            Gets or sets the <see cref="T:System.Reflection.MemberInfo"/> instance for this value.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.Type">
+            <summary>
+            Gets the type of the member which has to be instantiated.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.GetValue(System.Object)">
+            <summary>
+            Gets the value of the member from the given <paramref name="instance"/>.
+            </summary>
+            <param name="instance">The instance of which member's value will be returned.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlMemberInfo.SetValue(System.Object,System.Object)">
+            <summary>
+            Sets the member to the given value for the given <paramref name="instance"/>.
+            </summary>
+            <param name="instance">The instance of which member will be set.</param>
+            <param name="value">The value to set.</param>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlObjectAttribute">
+            <summary>
+            Decorates a class which can be serialized with the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer"/>.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlObjectAttribute.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlObjectAttribute"/> class.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlObjectInfo">
+            <summary>
+            Represents information about a type decorated with a <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlObjectAttribute"/>.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlObjectInfo.#ctor(System.Type)">
+            <summary>
+            Creates a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlObjectInfo"/> class caching information on the given
+            <paramref name="type"/>.
+            </summary>
+            <param name="type">The <see cref="T:System.Type"/> to cache information on.</param>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlObjectInfo.ImplementsByamlSerializable">
+            <summary>
+            Gets or sets a value indicating whether the type implements the <see cref="T:Syroot.NintenTools.Byaml.Serialization.IByamlSerializable"/> interface,
+            providing code to serialize or deserialize complex data.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlObjectInfo.Members">
+            <summary>
+            Gets the dictionary holding keys to the serializable values together with the <see cref="T:System.Reflection.MemberInfo"/> to
+            access them.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer">
+            <summary>
+            Represents a BYAML parser capable of loading and storing strongly typed data.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer"/> class with default serialization behavior.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.#ctor(Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer"/> class with the given
+            <paramref name="settings"/> controlling the serialization behavior.
+            </summary>
+            <param name="settings">The <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings"/> instance controlling the serialization
+            behavior.</param>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Settings">
+            <summary>
+            Gets or sets the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings"/> controlling the serialization behavior.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Deserialize``1(System.String,``0)">
+            <summary>
+            Deserializes the BYAML data from the file with the given <paramref name="fileName"/> into the given instance
+            of type <typeparamref name="T"/>.
+            </summary>
+            <typeparam name="T">The type of the data to deserialize.</typeparam>
+            <param name="fileName">The name of the file providing the data to deserialize.</param>
+            <param name="instance">The instance of type <typeparamref name="T"/> to deserialize the data into.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Deserialize``1(System.IO.Stream,``0)">
+            <summary>
+            Deserializes the BYAML data from the given <paramref name="stream"/> into the given instance of type
+            <typeparamref name="T"/>.
+            </summary>
+            <typeparam name="T">The type of the data to deserialize.</typeparam>
+            <param name="stream">The <see cref="T:System.IO.Stream"/> providing the data to deserialize.</param>
+            <param name="instance">The instance of type <typeparamref name="T"/> to deserialize the data into.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Deserialize``1(System.String)">
+            <summary>
+            Deserializes the BYAML data from the file with the given <paramref name="fileName"/> and returns the new
+            deserialized instance of type <typeparamref name="T"/>.
+            </summary>
+            <typeparam name="T">The type of the data to deserialize.</typeparam>
+            <param name="fileName">The name of the file providing the data to deserialize.</param>
+            <returns>The deserialized instance of type <typeparamref name="T"/>.</returns>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Deserialize``1(System.IO.Stream)">
+            <summary>
+            Deserializes the BYAML data from the given <paramref name="stream"/> and returns thew new deserialized
+            instance of type <typeparamref name="T"/>.
+            </summary>
+            <typeparam name="T">The type of the data to deserialize.</typeparam>
+            <param name="stream">The <see cref="T:System.IO.Stream"/> providing the data to deserialize.</param>
+            <returns>The deserialized instance of type <typeparamref name="T"/>.</returns>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Serialize(System.String,System.Object)">
+            <summary>
+            Serializes the given <paramref name="obj"/> and stores it in the file with the specified
+            <paramref name="fileName"/>.
+            </summary>
+            <param name="fileName">The name of the file in which the data will be stored.</param>
+            <param name="obj">The instance to store.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer.Serialize(System.IO.Stream,System.Object)">
+            <summary>
+            Serializes the given <paramref name="obj"/> and stores it in the specified <paramref name="stream"/>.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream"/> in which the data will be stored.</param>
+            <param name="obj">The instance to store.</param>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings">
+            <summary>
+            Represents options to control the serialization process of a <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializer"/>.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings"/> class with default settings (big
+            endian, no path arrays, version 1).
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings.ByteOrder">
+            <summary>
+            Gets or sets the <see cref="P:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings.ByteOrder"/> the data will be read and stored with.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings.SupportPaths">
+            <summary>
+            Gets or sets a value indicating whether <see cref="T:System.Collections.Generic.IEnumerable`1"/> instances will be
+            supported and expected in the BYAML file.
+            </summary>
+        </member>
+        <member name="P:Syroot.NintenTools.Byaml.Serialization.ByamlSerializerSettings.Version">
+            <summary>
+            Gets or sets the version of the BYAML file to write or expect.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.ByamlVersion">
+            <summary>
+            Represents the supported BYAML file versions.
+            </summary>
+        </member>
+        <member name="F:Syroot.NintenTools.Byaml.Serialization.ByamlVersion.Version1">
+            <summary>
+            Represents version 1 of the BYAML file format.
+            </summary>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.IByamlSerializable">
+            <summary>
+            Represents a class or structure which provides additional code to read or store complex BYAML data.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.IByamlSerializable.DeserializeByaml(System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Reads data from the given <paramref name="dictionary"/> to satisfy members.
+            </summary>
+            <param name="dictionary">The <see cref="T:System.Collections.Generic.IDictionary`2"/> to read the data from.</param>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.IByamlSerializable.SerializeByaml(System.Collections.Generic.IDictionary{System.String,System.Object})">
+            <summary>
+            Writes instance members into the given <paramref name="dictionary"/> to store them as BYAML data.
+            </summary>
+            <param name="dictionary">The <see cref="T:System.Collections.Generic.Dictionary`2"/> to store the data in.</param>
+        </member>
+        <member name="T:Syroot.NintenTools.Byaml.Serialization.TypeInfoExtensions">
+            <summary>
+            Represents extension methods for the <see cref="T:System.Reflection.TypeInfo"/> class.
+            </summary>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.TypeInfoExtensions.GetCustomAttribute``1(System.Reflection.TypeInfo)">
+            <summary>
+            Retrieves a custom attribute of a specified type <typeparamref name="T"/> that is applied to a specified
+            member.
+            </summary>
+            <typeparam name="T">The type of the attribute to return.</typeparam>
+            <param name="typeInfo">The extended <see cref="T:System.Reflection.TypeInfo"/>.</param>
+            <returns>A custom attribute that matches the given type, or <c>null</c> if no such attribute is found.
+            </returns>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.TypeInfoExtensions.GetCustomAttribute``1(System.Reflection.TypeInfo,System.Boolean)">
+            <summary>
+            Retrieves a custom attribute of a specified type <typeparamref name="T"/> that is applied to a specified
+            member, and optionally inspects the ancestors of that member.
+            </summary>
+            <typeparam name="T">The type of the attribute to return.</typeparam>
+            <param name="typeInfo">The extended <see cref="T:System.Reflection.TypeInfo"/>.</param>
+            <param name="inherit"><c>true</c> to inspect the ancestors of element; otherwise, <c>false</c>.</param>
+            <returns>A custom attribute that matches the given type, or <c>null</c> if no such attribute is found.
+            </returns>
+        </member>
+        <member name="M:Syroot.NintenTools.Byaml.Serialization.TypeInfoExtensions.GetElementType(System.Reflection.TypeInfo,System.Boolean)">
+            <summary>
+            Gets the type of the elements if this type is enumerable.
+            </summary>
+            <param name="typeInfo">The enumerable type.</param>
+            <param name="inherit"><c>true</c> to inspect the ancestors of element; otherwise, <c>false</c>.</param>
+            <returns>The type of the elements or <c>null</c> if there are no elements.</returns>
+        </member>
+    </members>
+</doc>
