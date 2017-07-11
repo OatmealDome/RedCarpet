@@ -33,7 +33,6 @@ namespace RedCarpet
         private SmCamera camera = new SmCamera();
         private Dictionary<string, SmModel> modelDict = new Dictionary<string, SmModel>();
         private Matrix4 projectionMatrix;
-        public List<MapObject> actorList = new List<MapObject>();
 
         private int prevMouseX;
         private int prevMouseY;
@@ -45,22 +44,18 @@ namespace RedCarpet
         private static Vector4 orangeColor = new Vector4(1.0f, 0.5f, 0.2f, 1.0f);
 
         private Dictionary<string, byte[]> LoadedSarc = null;
+        string loadedSarcFileName = "";
+        string loadedBymlFileName = ""; //inside the sarc
+        dynamic LoadedByml = null;
+
         static string BASEPATH = @"C:\Users\ronal\Desktop\3DWorldKit\SM3DW\content\"; //no need to put the editor in the game's folder, \ at the end matters !!!
+        //static string BASEPATH = @"C:\HAX\WIIU\SUPER MARIO 3D WORLD (EUR)\content\";
 
         public Form1()
         {
             InitializeComponent();
             if (!Directory.Exists(BASEPATH)) throw new Exception("set BASEPATH to the game's folder");
         }
-
-        /*private void button1_Click(object sender, EventArgs e)
-        {
-            dynamic byaml = ByamlFile.Load("test.byml");
-            IList<dynamic> objs = byaml["Objs"];
-            dynamic obj3 = objs[0];
-            //objs.Insert(10, obj3);
-            ByamlFile.Save("new.byml", byaml);
-        }*/
 
         private void titleDemo00StageDesign1ToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -70,6 +65,10 @@ namespace RedCarpet
 
         public void DisposeCurrentLevel()
         {
+            btn_openBymlView.Enabled = false;
+            loadedSarcFileName = "";
+            loadedBymlFileName = "";
+            LoadedByml = null;
             modelDict.Clear();
             if (LoadedSarc != null) LoadedSarc.Clear();
             LoadedSarc = null;
@@ -90,16 +89,18 @@ namespace RedCarpet
             Yaz0Compression.Decompress(filename, DecompressedSarc);
             LoadedSarc = sarc.unpackRam(DecompressedSarc); //the current level files are now stored in LoadedSarc
 
+            loadedSarcFileName = filename;
             /*Yaz0Compression.Decompress(BASEPATH + "StageData/" + "TitleDemo00StageDesign1" + ".szs", "stageDesign.sarc");
             sarc.unpack("stageDesign");
             Yaz0Compression.Decompress(BASEPATH + "ObjectData/" + "TitleDemoStepA" + ".szs", "stageModel.sarc");
             sarc.unpack("stageModel"); Not needed for now*/
-            
+
             //removed stage model loading, every stage include the model name in the byml
 
             // parse byaml
             parseBYML(Path.GetFileNameWithoutExtension(filename) + ".byml");
 
+            btn_openBymlView.Enabled = true;
             // force render
             glControl1.Invalidate();
         }
@@ -108,41 +109,32 @@ namespace RedCarpet
         {
             //calling it Object wasn't a great idea, i stared at the code for half hour before realizing that it's a custom class lol
             loadedMap = new Object();
-            string bymlName = "";
             if (name.EndsWith("Map1.byml"))  //the szs name always ends with 1, but the map byml doesn't, this seems to be true for every level
-                bymlName = name.Replace("Map1.byml", "Map.byml");
+                loadedBymlFileName = name.Replace("Map1.byml", "Map.byml");
             else if (name.EndsWith("Design1.byml"))
-                bymlName = name.Replace("Design1.byml", "Design.byml");
+                loadedBymlFileName = name.Replace("Design1.byml", "Design.byml");
             else if (name.EndsWith("Sound1.byml"))
-                bymlName = name.Replace("Sound1.byml", "Sound.byml");
-            else bymlName = name;
+                loadedBymlFileName = name.Replace("Sound1.byml", "Sound.byml");
+            else loadedBymlFileName = name;
 
-            dynamic byml = ByamlFile.Load(new MemoryStream(LoadedSarc[bymlName])); 
+            LoadedByml = ByamlFile.Load(new MemoryStream(LoadedSarc[loadedBymlFileName]));
 
-            IList<dynamic> objs = byml["Objs"];
-            cpath.Text = byml["FilePath"];
+            IList<dynamic> objs = LoadedByml["Objs"]; // ObjectList works as well
+            cpath.Text = LoadedByml["FilePath"];
             for (int i = 0; i < objs.Count; i++)
-            { 
-                loadedMap.mpobj = new Object.MapObject();
-                loadedMap.mpobj.objectID = objs[i]["Id"];
-                loadedMap.mpobj.modelName = objs[i]["ModelName"];
-                loadedMap.mpobj.Layer = objs[i]["LayerConfigName"];
-                loadedMap.mpobj.unitConfigName = objs[i]["UnitConfigName"];
-                loadedMap.mpobj.position = new Vector3(objs[i]["Translate"]["X"], objs[i]["Translate"]["Y"], objs[i]["Translate"]["Z"]);
-                loadedMap.mpobj.rotation = new Vector3(objs[i]["Rotate"]["X"], objs[i]["Rotate"]["Y"], objs[i]["Rotate"]["Z"]);
-                loadedMap.mpobj.scale = new Vector3(objs[i]["Scale"]["X"], objs[i]["Scale"]["Y"], objs[i]["Scale"]["Z"]);
-                loadedMap.mobjs.Add(loadedMap.mpobj);
-                actorList.Add(loadedMap.mpobj);
-                objectsList.Items.Add(loadedMap.mpobj.unitConfigName);
+            {
+                MapObject Tmp_mpobj = new Object.MapObject(objs[i]);
+                loadedMap.mobjs.Add(Tmp_mpobj);
+                objectsList.Items.Add(Tmp_mpobj.unitConfigName);
 
                 // Load the model
-                if (loadedMap.mpobj.modelName != null && !loadedMap.mpobj.Equals(""))
+                if (Tmp_mpobj.modelName != null && !Tmp_mpobj.Equals(""))
                 {
-                    LoadModel(loadedMap.mpobj.modelName);
+                    LoadModel(Tmp_mpobj.modelName);
                 }
                 else
                 {
-                    LoadModel(loadedMap.mpobj.unitConfigName);
+                    LoadModel(Tmp_mpobj.unitConfigName);
                 }
             }
         }
@@ -183,7 +175,6 @@ namespace RedCarpet
             {
                 // Load the bfres
                 LoadBfres(modelPath);
-
                 return true;
             }
 
@@ -228,6 +219,7 @@ namespace RedCarpet
             }
         }
 
+        #region GlControl events
         private void glControl1_Load(object sender, EventArgs e)
         {
             // Enable depth test
@@ -365,6 +357,40 @@ namespace RedCarpet
             glControl1.Invalidate();
         }
 
+        private void glControl1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (loadedMap.mobjs == null) return;
+            if (e.Button == MouseButtons.Left)
+            {
+                int iY = glControl1.Height - e.Y;
+                Object.MapObject obj;
+                obj = camera.castRay(e.X, e.Y, glControl1.Width, glControl1.Height, projectionMatrix, loadedMap.mobjs);
+                if (obj == null) return;
+                selectObject(obj);
+            }
+        }
+        #endregion
+
+        void selectObject(MapObject obj)
+        {
+            selectObject(loadedMap.mobjs.IndexOf(obj));
+        }
+
+        void selectObject(int Objindex)
+        {
+            objectsList.SelectedIndex = Objindex;
+        }
+
+        private void objectsList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            propertyGrid1.SelectedObject = loadedMap.mobjs[objectsList.SelectedIndex];
+        }
+
+        private void propertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            glControl1_Paint(null,null);
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
 
@@ -373,6 +399,7 @@ namespace RedCarpet
         private void bymlViewerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog opn = new OpenFileDialog();
+            opn.InitialDirectory = BASEPATH + "StageData";
             opn.Filter = "byml files, szs files |*.byml;*.szs";
             if (opn.ShowDialog() != DialogResult.OK) return;
             dynamic byml = null;
@@ -399,6 +426,7 @@ namespace RedCarpet
         private void openLevelToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog opn = new OpenFileDialog();
+            opn.InitialDirectory = BASEPATH + "StageData";
             opn.Filter = "szs files | *.szs";
             if (opn.ShowDialog() != DialogResult.OK) return;
             LoadLevel(opn.FileName);
@@ -409,16 +437,19 @@ namespace RedCarpet
             DisposeCurrentLevel();
         }
 
-        private void glControl1_MouseDown(object sender, MouseEventArgs e)
+        private void btn_openBymlView_Click(object sender, EventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
-            {
-                int iY = glControl1.Height - e.Y;
-                Object.MapObject obj;
-                obj = camera.castRay(e.X, e.Y, glControl1.Width, glControl1.Height, projectionMatrix, actorList);
-                if (obj == null) return;
-                MessageBox.Show(obj.unitConfigName);
-            }
+            if (LoadedByml is Dictionary<string, dynamic>) new ByamlViewer(LoadedByml).Show(); else throw new Exception("Not supported");
+        }
+
+        private void testSaveLevelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (LoadedByml == null) return;
+            MemoryStream mem = new MemoryStream();
+            ByamlFile.Save(mem,LoadedByml);
+            SaveFileDialog s = new SaveFileDialog();
+            s.Filter = "BYAML file|*.byml";
+            if (s.ShowDialog() == DialogResult.OK) File.WriteAllBytes(s.FileName, mem.ToArray());
         }
     }
 }
