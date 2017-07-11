@@ -12,16 +12,15 @@ namespace RedCarpet
 {
     class SARC
     {
-        public void pack(string Directory)
+        public static byte[] pack(Dictionary<string, byte[]> files)
         {
-            Stream o = new MemoryStream();
+            MemoryStream o = new MemoryStream();
             BinaryDataWriter bw = new BinaryDataWriter(o, false);
-            List<string> pFiles = new List<string>();
-            List<byte[]> fileData = new List<byte[]>();
-
-            readFiles(Directory, pFiles, fileData);
-            calcPadding(pFiles);
-            writeSARCChunk(bw);
+            SARC tmp = new SARC();
+            tmp.calcPadding(files.Keys.ToArray());
+            tmp.writeSARCChunk(bw);
+            //TODO
+            return o.ToArray();
         }
 
         public Dictionary<string, byte[]> unpackRam(Stream src)
@@ -74,10 +73,10 @@ namespace RedCarpet
             }
         }
 
-        public int calcPadding(List<string> file)
+        public int calcPadding(string[] file)
         {
             int tSize = 20 + 12 + 8;
-            for (int i = 0; i < file.Count; i++)
+            for (int i = 0; i < file.Length; i++)
             {
                 tSize += 0x10;
                 tSize += file[i].Length;

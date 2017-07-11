@@ -4,27 +4,95 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
+using System.ComponentModel;
+using static RedCarpet.PropertyGridTypes;
 
 namespace RedCarpet
 {
     public class Object
     {
-        public MapObject mpobj = new MapObject();
         public List<MapObject> mobjs = new List<MapObject>();
 
         public class MapObject
         {
-            public string objectID;
-            public string Layer;
+            public string objectID
+            {
+                get { return AllProperties["Id"]; }
+                set { AllProperties["Id"] = value; }
+            }
+
+            public string modelName
+            {
+                get { return AllProperties["ModelName"]; }
+                set { AllProperties["ModelName"] = value; }
+            }
+
+            public string Layer
+            {
+                get { return AllProperties["LayerConfigName"]; }
+                set { AllProperties["LayerConfigName"] = value; }
+            }
+
+            public string unitConfigName
+            {
+                get { return AllProperties["UnitConfigName"]; }
+                set { AllProperties["UnitConfigName"] = value; }
+            }
+
+            [TypeConverter(typeof(Vector3Converter))]
+            public Vector3 position
+            {
+                get { return new Vector3(AllProperties["Translate"]["X"], AllProperties["Translate"]["Y"], AllProperties["Translate"]["Z"]); }
+                set
+                {
+                    AllProperties["Translate"]["X"] = value.X;
+                    AllProperties["Translate"]["Y"] = value.Y;
+                    AllProperties["Translate"]["Z"] = value.Z;
+                }
+            }
+
+            [TypeConverter(typeof(Vector3Converter))]
+            public Vector3 rotation
+            {
+                get { return new Vector3(AllProperties["Rotate"]["X"], AllProperties["Rotate"]["Y"], AllProperties["Rotate"]["Z"]); }
+                set
+                {
+                    AllProperties["Rotate"]["X"] = value.X;
+                    AllProperties["Rotate"]["Y"] = value.Y;
+                    AllProperties["Rotate"]["Z"] = value.Z;
+                }
+            }
+
+            [TypeConverter(typeof(Vector3Converter))]
+            public Vector3 scale
+            {
+                get { return new Vector3(AllProperties["Scale"]["X"], AllProperties["Scale"]["Y"], AllProperties["Scale"]["Z"]); }
+                set
+                {
+                    AllProperties["Scale"]["X"] = value.X;
+                    AllProperties["Scale"]["Y"] = value.Y;
+                    AllProperties["Scale"]["Z"] = value.Z;
+                }
+            }
+
+            /*public string Template
+            {
+                get { return AllProperties; }
+                set { AllProperties = value; }
+            }*/
+
             public int priority;
-            public string unitConfigName;
-            public string modelName;
-            public Vector3 position;
-            public Vector3 rotation;
-            public Vector3 scale;
             public List<Vector3> vertices = new List<Vector3>();
             public Vector3 bbMin;
             public Vector3 bbMax;
+
+            public Dictionary<string, dynamic> AllProperties;
+
+            public MapObject(dynamic _obj)
+            {
+                if (!(_obj is Dictionary<string, dynamic>)) throw new Exception("Game object node not supported");
+                AllProperties = _obj;
+            }
 
             public Vector3 calcBBMin()
             {
