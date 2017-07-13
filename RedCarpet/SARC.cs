@@ -12,15 +12,75 @@ namespace RedCarpet
 {
     class SARC
     {
+        static uint NameHash(string name)
+        {
+            uint result = 0;
+            for (int i = 0; i < name.Length; i++)
+            {
+                result = name[i] + result * 0x00000065;
+            }
+            return result;
+        }
+
         public static byte[] pack(Dictionary<string, byte[]> files)
         {
             MemoryStream o = new MemoryStream();
             BinaryDataWriter bw = new BinaryDataWriter(o, false);
-            SARC tmp = new SARC();
-            tmp.calcPadding(files.Keys.ToArray());
-            tmp.writeSARCChunk(bw);
-            //TODO
+            bw.ByteOrder = ByteOrder.BigEndian;
+            bw.Write("SARC",BinaryStringFormat.NoPrefixOrTermination);
+            bw.Write((UInt16)0x14); // Chunk length
+            bw.Write((UInt16)0xFEFF); // BOM
+            bw.Write((UInt32)0x00); //filesize update later
+            bw.Write((UInt32)0x00); //Beginning of data
+            bw.Write((UInt32)0x01000000);
+            bw.Write("SFAT", BinaryStringFormat.NoPrefixOrTermination);
+            bw.Write((UInt16)0xc);
+            bw.Write((UInt16)files.Keys.Count);
+            bw.Write((UInt32)0x00000065);
+            List<uint> offsetToUpdate = new List<uint>();
+            foreach (string k in files.Keys)
+            {
+                bw.Write(NameHash(k));
+                bw.Write((byte)0x1);
+                bw.Write((byte)0); //this should be part of the name index, but u16 will work too
+                offsetToUpdate.Add((uint)bw.BaseStream.Position);
+                bw.Write((UInt16)0);
+                bw.Write((UInt32)0);
+                bw.Write((UInt32)0);
+            }
+            bw.Write("SFNT", BinaryStringFormat.NoPrefixOrTermination);
+            bw.Write((UInt16)0x8);
+            bw.Write((UInt16)0);
+            List<uint> StringOffsets = new List<uint>();
+            foreach (string k in files.Keys)
+            {
+                StringOffsets.Add((uint)bw.BaseStream.Position);
+                bw.Write(k, BinaryStringFormat.ZeroTerminated);
+                bw.Align(4);
+            }
+            List<uint> FileOffsets = new List<uint>();
+            foreach (string k in files.Keys)
+            {
+                FileOffsets.Add((uint)bw.BaseStream.Position);
+                bw.Write(files[k]);
+                bw.Align(4);
+            }
+            for (int i = 0; i < offsetToUpdate.Count; i++)
+            {
+                bw.BaseStream.Position = offsetToUpdate[i];
+                bw.Write((UInt16)((StringOffsets[i] - StringOffsets[0]) / 4));
+                bw.Write((UInt32)(FileOffsets[i] - FileOffsets[0]));
+                bw.Write((UInt32)(FileOffsets[i] + files.Values.ToArray()[i].Length - FileOffsets[0]));
+            }
+            bw.BaseStream.Position = 0x08;
+            bw.Write((uint)bw.BaseStream.Length);
+            bw.Write((uint)FileOffsets[0]);
             return o.ToArray();
+        }
+
+        public Dictionary<string, byte[]> unpackRam(byte[] src)
+        {
+            return unpackRam(new MemoryStream(src));
         }
 
         public Dictionary<string, byte[]> unpackRam(Stream src)
@@ -71,27 +131,6 @@ namespace RedCarpet
             {
                 throw e;
             }
-        }
-
-        public int calcPadding(string[] file)
-        {
-            int tSize = 20 + 12 + 8;
-            for (int i = 0; i < file.Length; i++)
-            {
-                tSize += 0x10;
-                tSize += file[i].Length;
-            }
-            return tSize *= ((10 / 2));
-        }
-
-        public void writeSARCChunk(BinaryDataWriter bw)
-        {
-            bw.ByteOrder = ByteOrder.BigEndian;
-            bw.Write("SARC");
-            bw.Write((UInt16)0x14); // Chunk length
-            bw.Write((UInt16)0xFEFF); // BOM
-            bw.Write((UInt32)0); // File size
-
         }
 
         public void readFiles(string dir, List<string> flist, List<byte[]> fdata)
@@ -156,13 +195,12 @@ namespace RedCarpet
        public class SFAT
         {
             public List<Node> nodes = new List<Node>();
-
-            public char[] chunkID;
+            
             public UInt16 chunkSize;
             public UInt16 nodeCount;
             public UInt32 hashMultiplier;
 
-            public class Node
+            public struct Node
             {
                 public UInt32 hash;
                 public byte fileBool;
@@ -180,7 +218,7 @@ namespace RedCarpet
                 hashMultiplier = br.ReadUInt32();
                 for (int i = 0; i < nodeCount; i++)
                 {
-                    Node node = new Node();
+                    Node node;
                     node.hash = br.ReadUInt32();
                     node.fileBool = br.ReadByte();
                     node.unknown1 = br.ReadByte();
@@ -190,6 +228,7 @@ namespace RedCarpet
                     nodes.Add(node);
                 }
             }
+
         }
 
         public class SFNT

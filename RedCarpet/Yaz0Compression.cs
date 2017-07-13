@@ -1,177 +1,142 @@
 ﻿using System.IO;
 using Syroot.BinaryData;
+using System;
+using System.Runtime.InteropServices;
 
-namespace Syroot.NintenTools.Yaz0
+namespace EveryFileExplorer
 {
-    /// <summary>
-    /// Represents a collection of methods to decompress Yaz0-compressed data.
-    /// </summary>
-    /// <remarks>If data is decompressed into a <see cref="MemoryStream"/>, no buffering has to be done, which is why
-    /// there are specific overloads for <see cref="MemoryStream"/> instances. Buffering is required because of the high
-    /// amount of seeking to read self-referencing data chunks.</remarks>
-    public static class Yaz0Compression
+    unsafe class YAZ0
     {
-        // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
-
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the file with the given name and writes them into the file
-        /// with the given output name. The decompression is done in memory before it is written back to the output
-        /// stream.
-        /// </summary>
-        /// <param name="inputFile">The name of the file from which the Yaz0-compressed data will be read.</param>
-        /// <param name="outputFile">The name of the file to which the decompressed data will be written.</param>
-        /// <returns>The number of decompressed bytes written to the output file.</returns>
-        public static int Decompress(string inputFile, string outputFile)
+        //Compression could be optimized by using look-ahead.
+        public static unsafe byte[] Compress(byte[] Data)
         {
-            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (FileStream output = new FileStream(outputFile, FileMode.Create, FileAccess.Write, FileShare.Read))
-            {
-                return Decompress(input, output);
-            }
-        }
+            byte* dataptr = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(Data, 0);
 
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the file with the given name and writes them into the given
-        /// output <see cref="Stream"/>. The decompression is done in memory before it is written back to the output
-        /// stream. The stream stays open after this method returned the number of decompressed bytes written.
-        /// </summary>
-        /// <param name="inputFile">The name of the file from which the Yaz0-compressed data will be read.</param>
-        /// <param name="output">The output <see cref="Stream"/> to which the decompressed data will be written.</param>
-        /// <returns>The number of decompressed bytes written to the output stream.</returns>
-        public static int Decompress(string inputFile, Stream output)
-        {
-            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            byte[] result = new byte[Data.Length + Data.Length / 8 + 0x10];
+            byte* resultptr = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(result, 0);
+            *resultptr++ = (byte)'Y';
+            *resultptr++ = (byte)'a';
+            *resultptr++ = (byte)'z';
+            *resultptr++ = (byte)'0';
+            *resultptr++ = (byte)((Data.Length >> 24) & 0xFF);
+            *resultptr++ = (byte)((Data.Length >> 16) & 0xFF);
+            *resultptr++ = (byte)((Data.Length >> 8) & 0xFF);
+            *resultptr++ = (byte)((Data.Length >> 0) & 0xFF);
+            for (int i = 0; i < 8; i++) *resultptr++ = 0;
+            int length = Data.Length;
+            int dstoffs = 16;
+            int Offs = 0;
+            while (true)
             {
-                return Decompress(input, output);
-            }
-        }
-
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the file with the given name and writes them into the given
-        /// output <see cref="MemoryStream"/>. The stream stays open after this method returned the number of
-        /// decompressed bytes written.
-        /// </summary>
-        /// <param name="inputFile">The name of the file from which the Yaz0-compressed data will be read.</param>
-        /// <param name="output">The output <see cref="MemoryStream"/> to which the decompressed data will be written
-        /// directly.</param>
-        /// <returns>The number of decompressed bytes written to the output stream.</returns>
-        public static int Decompress(string inputFile, MemoryStream output)
-        {
-            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return Decompress(input, output);
-            }
-        }
-
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the input <see cref="Stream"/> and writes them into the file
-        /// with the given output name. The decompression is done in memory before it is written back to the output
-        /// stream. The stream stays open after this method returned the number of decompressed bytes written.
-        /// </summary>
-        /// <param name="input">The input <see cref="Stream"/> from which the Yaz0-compressed data will be read.</param>
-        /// <param name="outputFile">The name of the file to which the decompressed data will be written.</param>
-        /// <returns>The number of decompressed bytes written to the output file.</returns>
-        public static int Decompress(Stream input, string outputFile)
-        {
-            using (FileStream output = new FileStream(outputFile, FileMode.Create, FileAccess.Write, FileShare.Read))
-            {
-                return Decompress(input, output);
-            }
-        }
-
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the input <see cref="Stream"/> and writes them into the given
-        /// output <see cref="Stream"/>. The decompression is done in memory before it is written back to the output
-        /// stream. Both streams stay open after this method returned the number of decompressed bytes written.
-        /// </summary>
-        /// <param name="input">The input <see cref="Stream"/> from which the Yaz0-compressed data will be read.</param>
-        /// <param name="output">The output <see cref="Stream"/> to which the decompressed data will be written.</param>
-        /// <returns>The number of decompressed bytes written to the output stream.</returns>
-        public static int Decompress(Stream input, Stream output)
-        {
-            // For any stream not being a memory stream, write to a memory buffer first before writing it to the output.
-            int decompressedBytes;
-            using (MemoryStream decompressionBuffer = new MemoryStream())
-            {
-                decompressedBytes = Decompress(input, decompressionBuffer);
-                decompressionBuffer.WriteTo(output);
-            }
-            return decompressedBytes;
-        }
-
-        /// <summary>
-        /// Decompresses the Yaz0-compressed contents of the input <see cref="Stream"/> and writes them directly into
-        /// the given output <see cref="MemoryStream"/>. Both streams stay open after this method returned the number of
-        /// decompressed bytes written.
-        /// </summary>
-        /// <param name="input">The input <see cref="Stream"/> from which the Yaz0-compressed data will be read.</param>
-        /// <param name="output">The output <see cref="MemoryStream"/> to which the decompressed data will be written
-        /// directly.</param>
-        /// <returns>The number of decompressed bytes written to the output stream.</returns>
-        public static int Decompress(Stream input, MemoryStream output)
-        {
-            using (BinaryDataReader reader = new BinaryDataReader(input, true))
-            using (BinaryDataWriter writer = new BinaryDataWriter(output, true))
-            {
-                reader.ByteOrder = ByteOrder.BigEndian;
-
-                // Read and check the header.
-                if (reader.ReadString(4) != "Yaz0")
+                int headeroffs = dstoffs++;
+                resultptr++;
+                byte header = 0;
+                for (int i = 0; i < 8; i++)
                 {
-                    throw new Yaz0Exception("Invalid Yaz0 header.");
-                }
-                uint decompressedSize = reader.ReadUInt32();
-                reader.Position += 8; // Padding
-
-                // Decompress the data.
-                int decompressedBytes = 0;
-                while (decompressedBytes < decompressedSize)
-                {
-                    // Read the configuration byte of a decompression setting group, and go through each bit of it.
-                    byte groupConfig = reader.ReadByte();
-                    for (int i = 7; i >= 0; i--)
+                    int comp = 0;
+                    int back = 1;
+                    int nr = 2;
                     {
-                        // Check if bit of the current chunk is set.
-                        if ((groupConfig & (1 << i)) == (1 << i))
+                        byte* ptr = dataptr - 1;
+                        int maxnum = 0x111;
+                        if (length - Offs < maxnum) maxnum = length - Offs;
+                        //Use a smaller amount of bytes back to decrease time
+                        int maxback = 0x400;//0x1000;
+                        if (Offs < maxback) maxback = Offs;
+                        maxback = (int)dataptr - maxback;
+                        int tmpnr;
+                        while (maxback <= (int)ptr)
                         {
-                            // Bit is set, copy 1 raw byte to the output.
-                            writer.Write(reader.ReadByte());
-                            decompressedBytes++;
-                        }
-                        else if (decompressedBytes < decompressedSize) // This does not make sense for last byte.
-                        {
-                            // Bit is not set and data copying configuration follows, either 2 or 3 bytes long.
-                            ushort dataBackSeekOffset = reader.ReadUInt16();
-                            int dataSize;
-                            // If the nibble of the first back seek offset byte is 0, the config is 3 bytes long.
-                            byte nibble = (byte)(dataBackSeekOffset >> 12/*1 byte (8 bits) + 1 nibble (4 bits)*/);
-                            if (nibble == 0)
+                            if (*(ushort*)ptr == *(ushort*)dataptr && ptr[2] == dataptr[2])
                             {
-                                // Nibble is 0, the number of bytes to read is in third byte, which is (size + 0x12).
-                                dataSize = reader.ReadByte() + 0x12;
+                                tmpnr = 3;
+                                while (tmpnr < maxnum && ptr[tmpnr] == dataptr[tmpnr]) tmpnr++;
+                                if (tmpnr > nr)
+                                {
+                                    if (Offs + tmpnr > length)
+                                    {
+                                        nr = length - Offs;
+                                        back = (int)(dataptr - ptr);
+                                        break;
+                                    }
+                                    nr = tmpnr;
+                                    back = (int)(dataptr - ptr);
+                                    if (nr == maxnum) break;
+                                }
                             }
-                            else
-                            {
-                                // Nibble is not 0, and determines (size + 0x02) of bytes to read.
-                                dataSize = nibble + 0x02;
-                                // Remaining bits are the real back seek offset.
-                                dataBackSeekOffset &= 0x0FFF;
-                            }
-                            // Since bytes can be reread right after they were written, write and read bytes one by one.
-                            for (int j = 0; j < dataSize; j++)
-                            {
-                                // Read one byte from the current back seek position.
-                                writer.Position -= dataBackSeekOffset + 1;
-                                byte readByte = (byte)writer.BaseStream.ReadByte();
-                                // Write the byte to the end of the memory stream.
-                                writer.Seek(0, SeekOrigin.End);
-                                writer.Write(readByte);
-                                decompressedBytes++;
-                            }
+                            --ptr;
                         }
                     }
+                    if (nr > 2)
+                    {
+                        Offs += nr;
+                        dataptr += nr;
+                        if (nr >= 0x12)
+                        {
+                            *resultptr++ = (byte)(((back - 1) >> 8) & 0xF);
+                            *resultptr++ = (byte)((back - 1) & 0xFF);
+                            *resultptr++ = (byte)((nr - 0x12) & 0xFF);
+                            dstoffs += 3;
+                        }
+                        else
+                        {
+                            *resultptr++ = (byte)((((back - 1) >> 8) & 0xF) | (((nr - 2) & 0xF) << 4));
+                            *resultptr++ = (byte)((back - 1) & 0xFF);
+                            dstoffs += 2;
+                        }
+                        comp = 1;
+                    }
+                    else
+                    {
+                        *resultptr++ = *dataptr++;
+                        dstoffs++;
+                        Offs++;
+                    }
+                    header = (byte)((header << 1) | ((comp == 1) ? 0 : 1));
+                    if (Offs >= length)
+                    {
+                        header = (byte)(header << (7 - i));
+                        break;
+                    }
                 }
-                return decompressedBytes;
+                result[headeroffs] = header;
+                if (Offs >= length) break;
+            }
+            while ((dstoffs % 4) != 0) dstoffs++;
+            byte[] realresult = new byte[dstoffs];
+            Array.Copy(result, realresult, dstoffs);
+            return realresult;
+        }
+
+        public static byte[] Decompress(string Filename) { return Decompress(System.IO.File.ReadAllBytes(Filename)); }
+
+        public static byte[] Decompress(byte[] Data)
+        {
+            UInt32 leng = (uint)(Data[4] << 24 | Data[5] << 16 | Data[6] << 8 | Data[7]);
+            byte[] Result = new byte[leng];
+            int Offs = 16;
+            int dstoffs = 0;
+            while (true)
+            {
+                byte header = Data[Offs++];
+                for (int i = 0; i < 8; i++)
+                {
+                    if ((header & 0x80) != 0) Result[dstoffs++] = Data[Offs++];
+                    else
+                    {
+                        byte b = Data[Offs++];
+                        int offs = ((b & 0xF) << 8 | Data[Offs++]) + 1;
+                        int length = (b >> 4) + 2;
+                        if (length == 2) length = Data[Offs++] + 0x12;
+                        for (int j = 0; j < length; j++)
+                        {
+                            Result[dstoffs] = Result[dstoffs - offs];
+                            dstoffs++;
+                        }
+                    }
+                    if (dstoffs >= leng) return Result;
+                    header <<= 1;
+                }
             }
         }
     }

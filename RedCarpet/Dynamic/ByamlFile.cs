@@ -7,6 +7,7 @@ using System.Text;
 using Syroot.BinaryData;
 using Syroot.Maths;
 using Syroot.NintenTools.Byaml.IO;
+using System.Globalization;
 
 namespace Syroot.NintenTools.Byaml.Dynamic
 {
@@ -19,7 +20,6 @@ namespace Syroot.NintenTools.Byaml.Dynamic
         // ---- CONSTANTS ----------------------------------------------------------------------------------------------
 
         private const ushort _magicBytes = 0x4259; // "BY"
-        public static Encoding JapaneseEncoding = Encoding.GetEncoding(932);
         // ---- MEMBERS ------------------------------------------------------------------------------------------------
 
         private bool _supportPaths;
@@ -153,7 +153,6 @@ namespace Syroot.NintenTools.Byaml.Dynamic
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
 
         // ---- Loading ----
-
         private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
@@ -281,7 +280,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
         private List<dynamic> ReadArrayNode(BinaryDataReader reader, int length, uint offset = 0)
         {
             List<dynamic> array = new List<dynamic>(length);
-
+            
             if (offset != 0) AlreadyReadNodes.Add(offset, array);
             // Read the element types of the array.
             byte[] nodeTypes = reader.ReadBytes(length);
@@ -325,7 +324,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
             for (int i = 0; i < length; i++)
             {
                 reader.Seek(nodeOffset + offsets[i], SeekOrigin.Begin);
-                stringArray.Add(reader.ReadString(BinaryStringFormat.ZeroTerminated, JapaneseEncoding));
+                stringArray.Add(reader.ReadString(BinaryStringFormat.ZeroTerminated));
             }
             reader.Seek(oldPosition, SeekOrigin.Begin);
 
@@ -373,6 +372,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
         }
 
         // ---- Saving ----
+
         private void Write(Stream stream, object root)
         {
             // Check if the root is of the correct type.
@@ -394,6 +394,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
             tmp.Clear();
             _nameArray.Sort(StringComparer.Ordinal);
             _stringArray.Sort(StringComparer.Ordinal);
+                
 
             // Open a writer on the given stream.
             using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.UTF8, true))
@@ -436,7 +437,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
                 WriteValueContents(writer, rootOffset, GetNodeType(root), root);
             }
         }
-
+        
         private void CollectNodeArrayContents(dynamic node,ref List<dynamic> alreadyCollected)
         {
             alreadyCollected.Add(node);
@@ -524,6 +525,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
                     WriteStringArrayNode(writer, value);
                     break;
                 case ByamlNodeType.PathArray:
+                    alreadyWrittenNodes.Add(value, (uint)writer.Position);
                     WritePathArrayNode(writer, value);
                     break;
                 case ByamlNodeType.Array:
@@ -640,7 +642,7 @@ namespace Syroot.NintenTools.Byaml.Dynamic
             foreach (string str in node)
             {
                 offsets.Add((uint)writer.BaseStream.Position - NodeStartPos);
-                writer.Write(str, BinaryStringFormat.ZeroTerminated, JapaneseEncoding);
+                writer.Write(str, BinaryStringFormat.ZeroTerminated);
             }
             offsets.Add((uint)writer.BaseStream.Position - NodeStartPos);
             writer.Align(4);

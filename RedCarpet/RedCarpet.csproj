@@ -105,7 +105,6 @@
     <Compile Include="Serialization\IByamlSerializable.cs" />
     <Compile Include="Serialization\TypeInfoExtensions.cs" />
     <Compile Include="Yaz0Compression.cs" />
-    <Compile Include="Yaz0Exception.cs" />
     <EmbeddedResource Include="ByamlViewer.resx">
       <DependentUpon>ByamlViewer.cs</DependentUpon>
     </EmbeddedResource>

@@ -6,79 +6,101 @@ using System.Threading.Tasks;
 using OpenTK;
 using System.ComponentModel;
 using static RedCarpet.PropertyGridTypes;
+using System.Collections;
 
 namespace RedCarpet
 {
-    public class Object
+    public class Object 
     {
         public List<MapObject> mobjs = new List<MapObject>();
 
-        public class MapObject
-        {
+        public class MapObject 
+        {            
+
+            public dynamic this[string v]
+            {
+                get { return _bymlNode[v];}
+                set { _bymlNode[v] = value; }
+            }
+
+            [TypeConverter (typeof(DictionaryConverter))]
+            public Dictionary<string, dynamic> AllProperties
+            {
+                get { return _bymlNode; }
+                set { _bymlNode = value; }
+            }
+
+            [Category("Common properties")]
             public string objectID
             {
-                get { return AllProperties["Id"]; }
-                set { AllProperties["Id"] = value; }
+                get { return _bymlNode["Id"]; }
+                set { _bymlNode["Id"] = value; }
             }
 
+            [Category("Common properties")]
             public string modelName
             {
-                get { return AllProperties["ModelName"]; }
-                set { AllProperties["ModelName"] = value; }
+                get { return _bymlNode["ModelName"]; }
+                set { _bymlNode["ModelName"] = value; }
             }
 
+            [Category("Common properties")]
             public string Layer
             {
-                get { return AllProperties["LayerConfigName"]; }
-                set { AllProperties["LayerConfigName"] = value; }
+                get { return _bymlNode["LayerConfigName"]; }
+                set { _bymlNode["LayerConfigName"] = value; }
             }
 
+            [Category("Common properties")]
             public string unitConfigName
             {
-                get { return AllProperties["UnitConfigName"]; }
-                set { AllProperties["UnitConfigName"] = value; }
+                get { return _bymlNode["UnitConfigName"]; }
+                set { _bymlNode["UnitConfigName"] = value; }
             }
 
+            [Category("Common properties")]
             [TypeConverter(typeof(Vector3Converter))]
             public Vector3 position
             {
-                get { return new Vector3(AllProperties["Translate"]["X"], AllProperties["Translate"]["Y"], AllProperties["Translate"]["Z"]); }
+                get { return new Vector3(_bymlNode["Translate"]["X"], _bymlNode["Translate"]["Y"], _bymlNode["Translate"]["Z"]); }
                 set
                 {
-                    AllProperties["Translate"]["X"] = value.X;
-                    AllProperties["Translate"]["Y"] = value.Y;
-                    AllProperties["Translate"]["Z"] = value.Z;
+                    _bymlNode["Translate"]["X"] = value.X;
+                    _bymlNode["Translate"]["Y"] = value.Y;
+                    _bymlNode["Translate"]["Z"] = value.Z;
                 }
             }
 
+            [Category("Common properties")]
             [TypeConverter(typeof(Vector3Converter))]
             public Vector3 rotation
             {
-                get { return new Vector3(AllProperties["Rotate"]["X"], AllProperties["Rotate"]["Y"], AllProperties["Rotate"]["Z"]); }
+                get { return new Vector3(_bymlNode["Rotate"]["X"], _bymlNode["Rotate"]["Y"], _bymlNode["Rotate"]["Z"]); }
                 set
                 {
-                    AllProperties["Rotate"]["X"] = value.X;
-                    AllProperties["Rotate"]["Y"] = value.Y;
-                    AllProperties["Rotate"]["Z"] = value.Z;
+                    _bymlNode["Rotate"]["X"] = value.X;
+                    _bymlNode["Rotate"]["Y"] = value.Y;
+                    _bymlNode["Rotate"]["Z"] = value.Z;
                 }
             }
 
+            [Category("Common properties")]
             [TypeConverter(typeof(Vector3Converter))]
             public Vector3 scale
             {
-                get { return new Vector3(AllProperties["Scale"]["X"], AllProperties["Scale"]["Y"], AllProperties["Scale"]["Z"]); }
+                get { return new Vector3(_bymlNode["Scale"]["X"], _bymlNode["Scale"]["Y"], _bymlNode["Scale"]["Z"]); }
                 set
                 {
-                    AllProperties["Scale"]["X"] = value.X;
-                    AllProperties["Scale"]["Y"] = value.Y;
-                    AllProperties["Scale"]["Z"] = value.Z;
+                    _bymlNode["Scale"]["X"] = value.X;
+                    _bymlNode["Scale"]["Y"] = value.Y;
+                    _bymlNode["Scale"]["Z"] = value.Z;
                 }
             }
 
             /*public string Template
             {
-                get { return AllProperties; }
-                set { AllProperties = value; }
+                get { return _bymlNode; }
+                set { _bymlNode = value; }
             }*/
 
             public int priority;
@@ -86,12 +108,12 @@ namespace RedCarpet
             public Vector3 bbMin;
             public Vector3 bbMax;
 
-            public Dictionary<string, dynamic> AllProperties;
+            private Dictionary<string, dynamic> _bymlNode = null;
 
             public MapObject(dynamic _obj)
             {
                 if (!(_obj is Dictionary<string, dynamic>)) throw new Exception("Game object node not supported");
-                AllProperties = _obj;
+                _bymlNode = _obj;
             }
 
             public Vector3 calcBBMin()

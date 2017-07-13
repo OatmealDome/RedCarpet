@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Syroot.NintenTools.Byaml;
 using Syroot.NintenTools.Byaml.Dynamic;
-using Syroot.NintenTools.Yaz0;
+using EveryFileExplorer;
 using System.IO;
 using RedCarpet.Gfx;
 using OpenTK;
@@ -48,8 +48,8 @@ namespace RedCarpet
         string loadedBymlFileName = ""; //inside the sarc
         dynamic LoadedByml = null;
 
-        static string BASEPATH = @"C:\Users\ronal\Desktop\3DWorldKit\SM3DW\content\"; //no need to put the editor in the game's folder, \ at the end matters !!!
-        //static string BASEPATH = @"C:\HAX\WIIU\SUPER MARIO 3D WORLD (EUR)\content\";
+        //static string BASEPATH = @"C:\Users\ronal\Desktop\3DWorldKit\SM3DW\content\"; //no need to put the editor in the game's folder, \ at the end matters !!!
+        static string BASEPATH = @"C:\HAX\WIIU\SUPER MARIO 3D WORLD (EUR)\content\";
 
         public Form1()
         {
@@ -84,10 +84,8 @@ namespace RedCarpet
         {
             DisposeCurrentLevel();
             //both yaz0 decompression and sarc unpacking are done in ram, this avoids useless wirtes to disk, faster level loading
-            SARC sarc = new SARC();
-            MemoryStream DecompressedSarc = new MemoryStream();
-            Yaz0Compression.Decompress(filename, DecompressedSarc);
-            LoadedSarc = sarc.unpackRam(DecompressedSarc); //the current level files are now stored in LoadedSarc
+            SARC sarc = new SARC();            
+            LoadedSarc = sarc.unpackRam(YAZ0.Decompress(filename)); //the current level files are now stored in LoadedSarc
 
             loadedSarcFileName = filename;
             /*Yaz0Compression.Decompress(BASEPATH + "StageData/" + "TitleDemo00StageDesign1" + ".szs", "stageDesign.sarc");
@@ -184,10 +182,8 @@ namespace RedCarpet
             {
                 // Decompress the szs into a sarc archive
                 string sarcPath = basePath + modelName;
-                MemoryStream mem = new MemoryStream();
-                Yaz0Compression.Decompress(szsPath, mem);
                 SARC sarc = new SARC();
-                var unpackedmodel = sarc.unpackRam(mem);
+                var unpackedmodel = sarc.unpackRam(YAZ0.Decompress(szsPath));
                 if (!unpackedmodel.ContainsKey(modelName + ".bfres"))
                     return false;
 
@@ -281,7 +277,7 @@ namespace RedCarpet
             glControl1.SwapBuffers();
         }
 
-        private void RenderMapObject(MapObject mapObject, int modelLocation, int colorLocation)
+        private void RenderMapObject(MapObject mapObject, int modelLocation, int colorLocation) //TODO: add scale and rotation
         {
             // Try to get the model via the UnitConfigName or ModelName
             SmModel model;
@@ -359,7 +355,7 @@ namespace RedCarpet
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (loadedMap.mobjs == null) return;
+            if (loadedMap == null || loadedMap.mobjs == null) return;
             if (e.Button == MouseButtons.Left)
             {
                 int iY = glControl1.Height - e.Y;
@@ -407,9 +403,7 @@ namespace RedCarpet
             else if (opn.FileName.EndsWith("szs"))
             {
                 SARC sarc = new SARC();
-                MemoryStream DecompressedSarc = new MemoryStream();
-                Yaz0Compression.Decompress(opn.FileName, DecompressedSarc);
-                var unpackedsarc = sarc.unpackRam(DecompressedSarc);
+                var unpackedsarc = sarc.unpackRam(YAZ0.Decompress(opn.FileName));
                 string bymlName = Path.GetFileNameWithoutExtension(opn.FileName) + ".byml";
                 if (bymlName.EndsWith("Map1.byml"))  //the szs name always ends with 1, but the map byml doesn't, this seems to be true for every level
                     bymlName = bymlName.Replace("Map1.byml", "Map.byml");
@@ -447,9 +441,10 @@ namespace RedCarpet
             if (LoadedByml == null) return;
             MemoryStream mem = new MemoryStream();
             ByamlFile.Save(mem,LoadedByml);
+            LoadedSarc[loadedBymlFileName] = mem.ToArray();
             SaveFileDialog s = new SaveFileDialog();
-            s.Filter = "BYAML file|*.byml";
-            if (s.ShowDialog() == DialogResult.OK) File.WriteAllBytes(s.FileName, mem.ToArray());
+            s.Filter = "szs file|*.szs";
+            if (s.ShowDialog() == DialogResult.OK) File.WriteAllBytes(s.FileName, YAZ0.Compress(SARC.pack(LoadedSarc)));
         }
     }
 }
