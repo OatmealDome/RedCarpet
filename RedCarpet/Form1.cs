@@ -34,6 +34,19 @@ namespace RedCarpet
         private Dictionary<string, SmModel> modelDict = new Dictionary<string, SmModel>();
         private Matrix4 projectionMatrix;
 
+        private Point FormCenter
+        {
+            get
+            {
+                return new Point(this.Location.X + this.Width, this.Location.Y + this.Height);
+            }
+        }
+
+        private Vector3 MoveDir;
+        private int MouseAxis;
+        private Point MouseStart;
+        private Point MouseLast;
+
         private int prevMouseX;
         private int prevMouseY;
         
@@ -47,9 +60,9 @@ namespace RedCarpet
         string loadedSarcFileName = "";
         string loadedBymlFileName = ""; //inside the sarc
         dynamic LoadedByml = null;
-
-        //static string BASEPATH = @"C:\Users\ronal\Desktop\3DWorldKit\SM3DW\content\"; //no need to put the editor in the game's folder, \ at the end matters !!!
-        static string BASEPATH = @"C:\HAX\WIIU\SUPER MARIO 3D WORLD (EUR)\content\";
+        
+        static string BASEPATH = @"C:\Users\ronal\Desktop\3DWorldKit\SM3DW\content\"; //no need to put the editor in the game's folder, \ at the end matters !!!
+        //static string BASEPATH = @"C:\HAX\WIIU\SUPER MARIO 3D WORLD (EUR)\content\";
 
         public Form1()
         {
@@ -341,6 +354,64 @@ namespace RedCarpet
                 glControl1.Invalidate();
             }
 
+            if (e.Button == MouseButtons.Left)
+            {
+                Point relMouse = glControl1.PointToClient(Cursor.Position);
+                if (MouseAxis == 0)
+                {
+                    Vector3 unitm = new Vector3(0f, 0f, 0f);
+                    if (Math.Abs(MouseStart.X - relMouse.X) > 45)
+                    {
+                        Vector3 r = new Vector3((float)(Math.Cos(camera.yaw + Math.PI / 2f) * (float)Math.Cos(camera.pitch)), (float)Math.Sin(camera.pitch),
+                        (float)(Math.Sin(camera.yaw + Math.PI / 2f) * (float)Math.Cos(camera.pitch)));
+
+                        if (Math.Abs(r.X) > Math.Abs(r.Y) && Math.Abs(r.X) > Math.Abs(r.Z))
+                            if (r.X > 0) MoveDir = -Vector3.UnitX; else MoveDir = Vector3.UnitX;
+                        else if (Math.Abs(r.Y) > Math.Abs(r.X) && Math.Abs(r.Y) > Math.Abs(r.Z))
+                            if (r.Y > 0) MoveDir = -Vector3.UnitY; else MoveDir = Vector3.UnitY;
+                        else if (Math.Abs(r.Z) > Math.Abs(r.Y) && Math.Abs(r.Z) > Math.Abs(r.X))
+                            if (r.Z > 0) MoveDir = -Vector3.UnitZ; else MoveDir = Vector3.UnitZ;
+
+                        MouseAxis = 1;
+                    }
+                    else if (Math.Abs(MouseStart.Y - relMouse.Y) > 45)
+                    {
+                        Vector3 u = new Vector3((float)(Math.Cos(camera.yaw) * (float)Math.Cos(camera.pitch - Math.PI / 2f)), (float)Math.Sin(camera.pitch + Math.PI / 2f),
+                        (float)(Math.Sin(camera.yaw) * (float)Math.Cos(camera.pitch + Math.PI / 2f)));
+
+                        if (Math.Abs(u.X) > Math.Abs(u.Y) && Math.Abs(u.X) > Math.Abs(u.Z))
+                            if (u.X > 0) MoveDir = -Vector3.UnitX; else MoveDir = Vector3.UnitX;
+                        else if (Math.Abs(u.Y) > Math.Abs(u.X) && Math.Abs(u.Y) > Math.Abs(u.Z))
+                            if (u.Y > 0) MoveDir = Vector3.UnitY; else MoveDir = -Vector3.UnitY;
+                        else if (Math.Abs(u.Z) > Math.Abs(u.Y) && Math.Abs(u.Z) > Math.Abs(u.X))
+                            if (u.Z > 0) MoveDir = Vector3.UnitZ; else MoveDir = -Vector3.UnitZ;
+
+                        MouseAxis = 2;
+                    }
+                }
+                else
+                {
+                    float dif = 0.0f;
+                    switch (Math.Abs(MouseAxis))
+                    {
+                        case 1:
+                            dif = MouseLast.X - relMouse.X;
+                            break;
+                        case 2:
+                            dif = MouseLast.Y - relMouse.Y;
+                            break;
+                    }
+                    Vector3 old = loadedMap.mobjs[objectsList.SelectedIndex].position;
+                    old += MoveDir * dif / 24;
+                    loadedMap.mobjs[objectsList.SelectedIndex].position = old;
+                }
+                glControl1.Invalidate();
+            }
+            else
+            {
+                MouseAxis = 0;
+            }
+
             prevMouseX = e.X;
             prevMouseY = newY;
         }
@@ -358,6 +429,8 @@ namespace RedCarpet
             if (loadedMap == null || loadedMap.mobjs == null) return;
             if (e.Button == MouseButtons.Left)
             {
+                Point mousePos = MouseLast = MouseStart = glControl1.PointToClient(Cursor.Position);
+
                 int iY = glControl1.Height - e.Y;
                 Object.MapObject obj;
                 obj = camera.castRay(e.X, e.Y, glControl1.Width, glControl1.Height, projectionMatrix, loadedMap.mobjs);
@@ -445,6 +518,23 @@ namespace RedCarpet
             SaveFileDialog s = new SaveFileDialog();
             s.Filter = "szs file|*.szs";
             if (s.ShowDialog() == DialogResult.OK) File.WriteAllBytes(s.FileName, YAZ0.Compress(SARC.pack(LoadedSarc)));
+        }
+
+        private void actorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // TO DO
+            
+            /* IList<dynamic> objectList = LoadedByml["Objs"];
+            Dictionary<string, dynamic> test = new Dictionary<string, dynamic>();
+            test.Add("CollisionCheckDist", 300);
+            test.Add("Comment", null);
+            test.Add("Id", "f0xCoin");
+            test.Add("IsConnectToCollision", false);
+            test.Add("IsDropShadowActorDown", false);
+            test.Add("IsLinkDest", false);
+            test.Add("IsPlacementInRouteDokan", false);
+            test.Add("LayerConfigName", "Common");
+            objectList.Add(test); */
         }
     }
 }
